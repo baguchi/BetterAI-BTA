@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Iterator;
 import java.util.List;
 
-@Mixin(RenderGlobal.class)
+@Mixin(value = RenderGlobal.class, remap = false)
 public class RenderGrobalMixin {
 
 	@Shadow
@@ -32,9 +32,6 @@ public class RenderGrobalMixin {
 
 		GL11.glDisable(3553);
 		GL11.glLineWidth(2.0F);
-		double offsetX = camera.getX(partialTicks);
-		double offsetY = camera.getY(partialTicks);
-		double offsetZ = camera.getZ(partialTicks);
 
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		float entityRadius = 0.0F;
@@ -54,7 +51,7 @@ public class RenderGrobalMixin {
 				IPath path = (IPath) e;
 				for (Node node : path.getCurrentPath()) {
 					if (node != null) {
-						AABB aabb = new AABB(node.x - 0.5F - x, node.y - y, node.z - 0.5F - z, node.x + 0.5F - x, node.y + 0.1F - y, node.z + 0.5F - z);
+						AABB aabb = new AABB(node.x - 1F - x, node.y - y, node.z - 1F - z, node.x - x, node.y + 0.1F - y, node.z - z);
 						this.drawOutlinedBoundingBox(aabb);
 					}
 				}
