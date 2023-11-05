@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "examplemod",
+	"id": "better_ai",
   "version": "${version}",
-
-  "name": "Example Mod",
-  "description": "This mod aims to help new BTA modders.",
+	"name": "BetterAI",
+	"description": "This mod aims to change mob ai for BTA.",
   "authors": [
-    "Turnip Labs"
+		"bagu_chan"
   ],
   "contact": {
     "homepage": "",
@@ -18,11 +17,11 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-        "turniplabs.examplemod.ExampleMod"
+			"baguchan.better_ai.BetterAI"
     ]
   },
   "mixins": [
-      "examplemod.mixins.json"
+		"better_ai.mixins.json"
   ],
 
   "depends": {
