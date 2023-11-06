@@ -22,7 +22,6 @@ public class WorldMixin {
 
 	@Inject(method = "getEntityPathToXYZ", at = @At("HEAD"), cancellable = true)
 	public void getEntityPathToXYZ(Entity entity, int i, int j, int k, float f, CallbackInfoReturnable<Path> cir) {
-
 		if (entity instanceof IPath) {
 			if (((IPath) entity).getPathFinder() != null) {
 				cir.setReturnValue(((IPath) entity).getPathFinder().findPath(entity, i, j, k, f));

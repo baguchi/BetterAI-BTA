@@ -1,14 +1,14 @@
 package baguchan.better_ai;
 
-import baguchan.better_ai.util.BetterPathFinder;
-import net.minecraft.core.world.pathfinder.Node;
+import baguchan.better_ai.path.BetterNode;
+import baguchan.better_ai.path.BetterPathFinder;
 
 import java.util.List;
 
 public interface IPath {
-	void setCurrentPath(List<Node> node);
+	void setCurrentPath(List<BetterNode> node);
 
-	List<Node> getCurrentPath();
+	List<BetterNode> getCurrentPath();
 
 	void setPathFinder(BetterPathFinder path);
 

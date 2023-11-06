@@ -1,4 +1,4 @@
-package baguchan.better_ai.util;
+package baguchan.better_ai.path;
 
 public class BetterBinaryHeap {
 	public BetterNode[] heap = new BetterNode[1024];

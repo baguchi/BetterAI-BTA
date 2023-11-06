@@ -1,6 +1,7 @@
-package baguchan.better_ai.util;
+package baguchan.better_ai.path;
 
 import baguchan.better_ai.IPath;
+import com.google.common.collect.Lists;
 import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
 import net.minecraft.core.block.BlockDoor;
@@ -11,9 +12,8 @@ import net.minecraft.core.util.phys.AABB;
 import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.IdHashMap;
-import net.minecraft.core.world.pathfinder.Node;
-import org.spongepowered.include.com.google.common.collect.Lists;
 
+import java.util.Collections;
 import java.util.List;
 
 public class BetterPathFinder {
@@ -31,7 +31,7 @@ public class BetterPathFinder {
 	}
 
 	public BetterPath findPath(Entity entity, int xt, int yt, int zt, float distance) {
-		return this.findPath(entity, (double) ((float) xt + 0.5F), (double) ((float) yt + 0.5F), (double) ((float) zt + 0.5F), distance);
+		return this.findPath(entity, (float) xt + 0.5F, (double) ((float) yt + 0.5F), (double) ((float) zt + 0.5F), distance);
 	}
 
 	private BetterPath findPath(Entity entity, double xt, double yt, double zt, float distance) {
@@ -43,9 +43,9 @@ public class BetterPathFinder {
 		BetterPath pathentity = this.findPath(entity, pathpoint, pathpoint1, pathpoint2, distance);
 
 		if (entity instanceof IPath) {
-			List<Node> nodeList = Lists.newArrayList();
+			List<BetterNode> nodeList = Lists.newArrayList();
 			if (pathentity != null && pathentity.getNodes() != null) {
-				for (Node node : pathentity.getNodes()) {
+				for (BetterNode node : pathentity.getNodes()) {
 					if (node != null) {
 						nodeList.add(node);
 					}
@@ -64,7 +64,6 @@ public class BetterPathFinder {
 		this.openSet.insert(pathpoint);
 		BetterNode pathpoint3 = pathpoint;
 
-		boolean flag = false;
 		while (!this.openSet.isEmpty()) {
 			BetterNode pathpoint4 = this.openSet.pop();
 			if (pathpoint4.equals(pathpoint1)) {
@@ -92,9 +91,6 @@ public class BetterPathFinder {
 						this.openSet.insert(pathpoint5);
 					}
 				}
-			}
-			if (flag) {
-				break;
 			}
 		}
 
@@ -138,9 +134,8 @@ public class BetterPathFinder {
 	private BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
 		BetterNode pathpoint1 = null;
 		if (this.isFree(entity, x, y, z, pathpoint) == 1) {
-			pathpoint1 = this.getBetterNode(x, y + l, z);
+			pathpoint1 = this.getBetterNode(x, y, z);
 		}
-
 
 		if (entity instanceof IPath) {
 			if (!((IPath) entity).canSwimLava()) {
@@ -246,22 +241,22 @@ public class BetterPathFinder {
 			}
 		}
 
-
 		return 1;
 	}
 
 	private BetterPath reconstructPath(BetterNode p_77435_) {
-		List<BetterNode> list = com.google.common.collect.Lists.newArrayList();
+		List<BetterNode> list = Lists.newArrayList();
 		BetterNode node = p_77435_;
-		list.add(0, p_77435_);
-		int i = 1;
 
+		int i = 1;
+		list.add(0, node);
 		while (node.cameFrom != null) {
 			node = node.cameFrom;
 			list.add(i, node);
 			i++;
 		}
 
-		return new BetterPath(list.toArray(list.toArray(new BetterNode[i])));
+		Collections.reverse(list);
+		return new BetterPath(list.toArray(new BetterNode[i]));
 	}
 }
