@@ -1,7 +1,7 @@
 package baguchan.better_ai;
 
+import baguchan.better_ai.util.BetterPathFinder;
 import net.minecraft.core.world.pathfinder.Node;
-import net.minecraft.core.world.pathfinder.PathFinder;
 
 import java.util.List;
 
@@ -10,9 +10,9 @@ public interface IPath {
 
 	List<Node> getCurrentPath();
 
-	void setPathFinder(PathFinder path);
+	void setPathFinder(BetterPathFinder path);
 
-	PathFinder getPathFinder();
+	BetterPathFinder getPathFinder();
 
 	boolean canSwimLava();
 }

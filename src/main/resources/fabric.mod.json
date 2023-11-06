@@ -11,8 +11,7 @@
     "homepage": "",
     "sources": ""
   },
-	"license": "MIT License",
-
+	"license": "GNU LESSER GENERAL PUBLIC LICENSE",
   "environment": "*",
   "entrypoints": {
     "main": [
