@@ -105,7 +105,7 @@ public class BetterPathFinder {
 	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
 		int i = 0;
 		int j = 0;
-		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1).getMalus() == 0) {
+		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1) == BlockPath.OPEN) {
 			j = 1;
 		}
 
@@ -134,19 +134,19 @@ public class BetterPathFinder {
 
 	protected BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
 		BetterNode pathpoint1 = null;
-		if (this.isFree(entity, x, y, z, pathpoint).getMalus() == 0) {
+		if (this.isFree(entity, x, y, z, pathpoint) == BlockPath.OPEN) {
 			pathpoint1 = this.getBetterNode(x, y, z);
 		}
 
-		if (pathpoint1 == null && l > 0 && this.isFree(entity, x, y + l, z, pathpoint).getMalus() == 0) {
+		if (pathpoint1 == null && l > 0 && this.isFree(entity, x, y + l, z, pathpoint) == BlockPath.OPEN) {
 			pathpoint1 = this.getBetterNode(x, y + l, z);
 			y += l;
 		}
 
 		if (pathpoint1 != null) {
 			int i1 = 0;
-			BlockPath j1 = BlockPath.OPEN;
-			while (y > 0 && (this.isFree(entity, x, y - 1, z, pathpoint)).getMalus() == 0) {
+			BlockPath j1 = BlockPath.BLOCKED;
+			while (y > 0 && (j1 = this.isFree(entity, x, y - 1, z, pathpoint)) == BlockPath.OPEN) {
 				++i1;
 				if (i1 >= 4) {
 					return null;
@@ -219,7 +219,7 @@ public class BetterPathFinder {
 							} else {
 								Material material = Block.blocksList[k1].blockMaterial;
 								if (material.blocksMotion()) {
-									return BlockPath.OPEN;
+									return BlockPath.BLOCKED;
 								}
 
 								if (material == Material.water) {

@@ -59,8 +59,7 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 	@Redirect(method = "updatePlayerActionState", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/util/phys/Vec3d;squareDistanceTo(DDD)D"))
 	public double modifiredSqr(Vec3d instance, double d, double d1, double d2) {
 		Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
-		double d4 = this.bbWidth;
-		return coordsForNextPath.squareDistanceTo(d4, canMoveDirect() ? d4 : d1, d4);
+		return coordsForNextPath.squareDistanceTo(this.x, canMoveDirect() ? this.y : coordsForNextPath.yCoord, this.z);
 	}
 
 	public void faceEntity(Entity entity, float f, float f1) {

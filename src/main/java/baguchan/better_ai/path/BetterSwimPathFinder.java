@@ -1,10 +1,8 @@
 package baguchan.better_ai.path;
 
-import baguchan.better_ai.api.IDangerBlock;
 import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
-import net.minecraft.core.block.BlockDoor;
 import net.minecraft.core.block.material.Material;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.util.phys.AABB;
@@ -19,14 +17,9 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 		this.worldSource = worldSource;
 	}
 
-
 	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
 		int i = 0;
 		int j = 0;
-		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1).getMalus() == 0) {
-			j = 1;
-		}
-
 		BetterNode pathpoint3 = this.getBetterNode(entity, pathpoint.x, pathpoint.y, pathpoint.z + 1, pathpoint1, j);
 		BetterNode pathpoint4 = this.getBetterNode(entity, pathpoint.x - 1, pathpoint.y, pathpoint.z, pathpoint1, j);
 		BetterNode pathpoint5 = this.getBetterNode(entity, pathpoint.x + 1, pathpoint.y, pathpoint.z, pathpoint1, j);
@@ -50,10 +43,16 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 		return i;
 	}
 
+
 	protected BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
 		BetterNode pathpoint1 = null;
-		if (this.isFree(entity, x, y, z, pathpoint).getMalus() == 0) {
+		if (this.isFree(entity, x, y, z, pathpoint) == BlockPath.WATER) {
 			pathpoint1 = this.getBetterNode(x, y, z);
+		}
+
+		if (pathpoint1 == null && l > 0 && this.isFree(entity, x, y + l, z, pathpoint) == BlockPath.WATER) {
+			pathpoint1 = this.getBetterNode(x, y + l, z);
+			y += l;
 		}
 
 		return pathpoint1;
@@ -90,31 +89,14 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 					if (blockDistance < possibleDist) {
 						int k1 = this.worldSource.getBlockId(x1, y1, z1);
 						if (k1 > 0) {
-							if (Block.blocksList[k1] instanceof BlockDoor) {
-								int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
-								if (!BlockDoor.isOpen(l1)) {
-									return BlockPath.DOOR_OPEN;
-								}
-							} else {
-								Material material = Block.blocksList[k1].blockMaterial;
-								if (material.blocksMotion()) {
-									return BlockPath.OPEN;
-								}
+							Material material = Block.blocksList[k1].blockMaterial;
 
-								if (material == Material.water) {
-									return BlockPath.WATER;
-								}
+							if (material == Material.water) {
+								return BlockPath.WATER;
+							}
 
-								if (material == Material.lava) {
-									return BlockPath.LAVA;
-								}
-								if (material == Material.fire) {
-									return BlockPath.FIRE;
-								}
-
-								if (Block.blocksList[k1] instanceof IDangerBlock) {
-									return ((IDangerBlock) Block.blocksList[k1]).getBlockPath();
-								}
+							if (material.blocksMotion()) {
+								return BlockPath.BLOCKED;
 							}
 						}
 					}
