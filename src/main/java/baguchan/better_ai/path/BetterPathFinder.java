@@ -101,7 +101,7 @@ public class BetterPathFinder {
 		}
 	}
 
-	private int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
+	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
 		int i = 0;
 		int j = 0;
 		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1) == 1) {
@@ -131,7 +131,7 @@ public class BetterPathFinder {
 		return i;
 	}
 
-	private BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
+	protected BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
 		BetterNode pathpoint1 = null;
 		if (this.isFree(entity, x, y, z, pathpoint) == 1) {
 			pathpoint1 = this.getBetterNode(x, y, z);
@@ -174,7 +174,7 @@ public class BetterPathFinder {
 		return pathpoint1;
 	}
 
-	private final BetterNode getBetterNode(int x, int y, int z) {
+	protected final BetterNode getBetterNode(int x, int y, int z) {
 		int l = BetterNode.createHash(x, y, z);
 		BetterNode pathpoint = (BetterNode) this.closedSet.get(l);
 		if (pathpoint == null) {
@@ -185,7 +185,7 @@ public class BetterPathFinder {
 		return pathpoint;
 	}
 
-	private int isFree(Entity entity, int x, int y, int z, BetterNode pathpoint) {
+	protected int isFree(Entity entity, int x, int y, int z, BetterNode pathpoint) {
 		boolean flag = false;
 		boolean flag2 = false;
 		boolean flag3 = false;
