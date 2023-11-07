@@ -1,6 +1,8 @@
 package baguchan.better_ai.path;
 
-import baguchan.better_ai.IPath;
+import baguchan.better_ai.api.IPath;
+import baguchan.better_ai.api.IPathGetter;
+import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Lists;
 import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
@@ -20,7 +22,7 @@ public class BetterPathFinder {
 	private final World worldSource;
 	private final BetterBinaryHeap openSet = new BetterBinaryHeap();
 	private final IdHashMap closedSet = new IdHashMap();
-	private final BetterNode[] neighbors = new BetterNode[32];
+	protected final BetterNode[] neighbors = new BetterNode[32];
 
 	public BetterPathFinder(World worldSource) {
 		this.worldSource = worldSource;
@@ -31,7 +33,7 @@ public class BetterPathFinder {
 	}
 
 	public BetterPath findPath(Entity entity, int xt, int yt, int zt, float distance) {
-		return this.findPath(entity, (float) xt + 0.5F, (double) ((float) yt + 0.5F), (double) ((float) zt + 0.5F), distance);
+		return this.findPath(entity, (float) xt + 0.5F, (double) ((float) yt - 0.5F), (double) ((float) zt + 0.5F), distance);
 	}
 
 	private BetterPath findPath(Entity entity, double xt, double yt, double zt, float distance) {
@@ -70,9 +72,8 @@ public class BetterPathFinder {
 				return this.reconstructPath(pathpoint1);
 			}
 
-			if (pathpoint4.distanceTo(pathpoint1) < pathpoint3.distanceTo(pathpoint1)) {
-				pathpoint3 = pathpoint4;
-			}
+			pathpoint3 = pathpoint4;
+
 
 			pathpoint4.closed = true;
 			int i = this.getNeighbors(entity, pathpoint4, pathpoint2, pathpoint1, f);
@@ -104,7 +105,7 @@ public class BetterPathFinder {
 	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
 		int i = 0;
 		int j = 0;
-		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1) == 1) {
+		if (this.isFree(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1).getMalus() == 0) {
 			j = 1;
 		}
 
@@ -133,28 +134,19 @@ public class BetterPathFinder {
 
 	protected BetterNode getBetterNode(Entity entity, int x, int y, int z, BetterNode pathpoint, int l) {
 		BetterNode pathpoint1 = null;
-		if (this.isFree(entity, x, y, z, pathpoint) == 1) {
+		if (this.isFree(entity, x, y, z, pathpoint).getMalus() == 0) {
 			pathpoint1 = this.getBetterNode(x, y, z);
 		}
 
-		if (entity instanceof IPath) {
-			if (!((IPath) entity).canSwimLava()) {
-				if (this.isFree(entity, x, y - 1, z, pathpoint) == -2) {
-					return null;
-				}
-			}
-		}
-
-		if (pathpoint1 == null && l > 0 && this.isFree(entity, x, y + l, z, pathpoint) == 1) {
+		if (pathpoint1 == null && l > 0 && this.isFree(entity, x, y + l, z, pathpoint).getMalus() == 0) {
 			pathpoint1 = this.getBetterNode(x, y + l, z);
 			y += l;
 		}
 
 		if (pathpoint1 != null) {
 			int i1 = 0;
-			int j1 = 0;
-
-			while (y > 0 && (j1 = this.isFree(entity, x, y - 1, z, pathpoint)) == 1) {
+			BlockPath j1 = BlockPath.OPEN;
+			while (y > 0 && (this.isFree(entity, x, y - 1, z, pathpoint)).getMalus() == 0) {
 				++i1;
 				if (i1 >= 4) {
 					return null;
@@ -164,10 +156,13 @@ public class BetterPathFinder {
 				if (y > 0) {
 					pathpoint1 = this.getBetterNode(x, y, z);
 				}
+				j1 = this.isFree(entity, x, y - 1, z, pathpoint);
 			}
 
-			if (j1 == -2) {
-				return null;
+			if (entity instanceof IPathGetter) {
+				if (!((IPathGetter) entity).canMoveIt(j1)) {
+					return null;
+				}
 			}
 		}
 
@@ -185,7 +180,7 @@ public class BetterPathFinder {
 		return pathpoint;
 	}
 
-	protected int isFree(Entity entity, int x, int y, int z, BetterNode pathpoint) {
+	protected BlockPath isFree(Entity entity, int x, int y, int z, BetterNode pathpoint) {
 		boolean flag = false;
 		boolean flag2 = false;
 		boolean flag3 = false;
@@ -219,20 +214,23 @@ public class BetterPathFinder {
 							if (Block.blocksList[k1] instanceof BlockDoor) {
 								int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
 								if (!BlockDoor.isOpen(l1)) {
-									return 0;
+									return BlockPath.DOOR_OPEN;
 								}
 							} else {
 								Material material = Block.blocksList[k1].blockMaterial;
 								if (material.blocksMotion()) {
-									return 0;
+									return BlockPath.OPEN;
 								}
 
 								if (material == Material.water) {
-									return -1;
+									return BlockPath.WATER;
 								}
 
-								if (material == Material.lava || material == Material.fire) {
-									return -2;
+								if (material == Material.lava) {
+									return BlockPath.LAVA;
+								}
+								if (material == Material.fire) {
+									return BlockPath.FIRE;
 								}
 							}
 						}
@@ -241,7 +239,7 @@ public class BetterPathFinder {
 			}
 		}
 
-		return 1;
+		return BlockPath.OPEN;
 	}
 
 	private BetterPath reconstructPath(BetterNode p_77435_) {

@@ -1,6 +1,6 @@
 package baguchan.better_ai.mixin;
 
-import baguchan.better_ai.IHead;
+import baguchan.better_ai.api.IHead;
 import net.minecraft.client.render.entity.LivingRenderer;
 import net.minecraft.core.entity.EntityLiving;
 import org.objectweb.asm.Opcodes;

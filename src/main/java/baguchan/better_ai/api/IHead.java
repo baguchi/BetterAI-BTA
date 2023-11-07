@@ -1,4 +1,4 @@
-package baguchan.better_ai;
+package baguchan.better_ai.api;
 
 public interface IHead {
 	float getXHeadRot();

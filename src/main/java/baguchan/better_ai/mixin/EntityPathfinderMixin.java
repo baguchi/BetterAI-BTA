@@ -1,21 +1,30 @@
 package baguchan.better_ai.mixin;
 
-import baguchan.better_ai.IHead;
-import baguchan.better_ai.IPath;
+import baguchan.better_ai.api.IHead;
+import baguchan.better_ai.api.IPath;
+import baguchan.better_ai.api.IPathGetter;
 import baguchan.better_ai.path.BetterNode;
 import baguchan.better_ai.path.BetterPathFinder;
+import baguchan.better_ai.util.BlockPath;
+import com.google.common.collect.Maps;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.EntityLiving;
 import net.minecraft.core.entity.EntityPathfinder;
 import net.minecraft.core.util.helper.MathHelper;
+import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.World;
+import net.minecraft.core.world.pathfinder.Path;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.include.com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.Map;
 
 @Mixin(value = EntityPathfinder.class, remap = false)
-public abstract class EntityPathfinderMixin extends EntityLiving implements IPath, IHead {
+public abstract class EntityPathfinderMixin extends EntityLiving implements IPath, IHead, IPathGetter {
 	public List<BetterNode> nodeList = Lists.newArrayList();
 	public BetterPathFinder pathFinder;
 
@@ -24,6 +33,9 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 
 	protected float xHeadRotO;
 	protected float yHeadRotO;
+	@Shadow
+	private Path pathToEntity;
+	private Map<BlockPath, Float> pathfindingMalus = Maps.newHashMap();
 
 	public EntityPathfinderMixin(World world) {
 		super(world);
@@ -42,6 +54,13 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 		this.xHeadRot = this.xRot;
 		this.yHeadRot = this.yRot;
 		super.tick();
+	}
+
+	@Redirect(method = "updatePlayerActionState", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/util/phys/Vec3d;squareDistanceTo(DDD)D"))
+	public double modifiredSqr(Vec3d instance, double d, double d1, double d2) {
+		Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
+		double d4 = this.bbWidth;
+		return coordsForNextPath.squareDistanceTo(d4, canMoveDirect() ? d4 : d1, d4);
 	}
 
 	public void faceEntity(Entity entity, float f, float f1) {
@@ -121,8 +140,12 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 		return this.pathFinder;
 	}
 
-	@Override
-	public boolean canSwimLava() {
-		return false;
+	public float getPathfindingMalus(BlockPath p_21440_) {
+		Float f = this.pathfindingMalus.get(p_21440_);
+		return f == null ? p_21440_.getMalus() : f;
+	}
+
+	public void setPathfindingMalus(BlockPath p_21442_, float p_21443_) {
+		this.pathfindingMalus.put(p_21442_, p_21443_);
 	}
 }
