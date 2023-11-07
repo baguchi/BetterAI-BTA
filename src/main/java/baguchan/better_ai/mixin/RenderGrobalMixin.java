@@ -49,10 +49,12 @@ public class RenderGrobalMixin {
 			Entity e = (Entity) var13.next();
 			if (e instanceof IPath) {
 				IPath path = (IPath) e;
-				for (Node node : path.getCurrentPath()) {
-					if (node != null) {
-						AABB aabb = new AABB(node.x - x, node.y - y, node.z - z, node.x + 1 - x, node.y + 0.1F - y, node.z + 1 - z);
-						this.drawOutlinedBoundingBox(aabb);
+				if (path.getCurrentPath() != null) {
+					for (Node node : path.getCurrentPath()) {
+						if (node != null) {
+							AABB aabb = new AABB(node.x - x, node.y - y, node.z - z, node.x + 1 - x, node.y + 0.1F - y, node.z + 1 - z);
+							this.drawOutlinedBoundingBox(aabb);
+						}
 					}
 				}
 			}

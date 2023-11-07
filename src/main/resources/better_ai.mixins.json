@@ -4,6 +4,7 @@
   "package": "baguchan.better_ai.mixin",
     "compatibilityLevel": "JAVA_8",
     "mixins": [
+      "EntityLivingMixin",
       "EntityPathfinderMixin",
       "RenderGrobalMixin",
       "WorldMixin"
