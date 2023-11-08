@@ -5,11 +5,11 @@
     "compatibilityLevel": "JAVA_8",
     "mixins": [
       "EntityPathfinderMixin",
-      "LivingRendererMixin",
-      "RenderGrobalMixin",
       "WorldMixin"
     ],
     "client": [
+      "LivingRendererMixin",
+      "RenderGrobalMixin"
     ],
     "injectors": {
         "defaultRequire": 1
