@@ -24,6 +24,9 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 		BetterNode pathpoint4 = this.getBetterNode(entity, pathpoint.x - 1, pathpoint.y, pathpoint.z, pathpoint1, j);
 		BetterNode pathpoint5 = this.getBetterNode(entity, pathpoint.x + 1, pathpoint.y, pathpoint.z, pathpoint1, j);
 		BetterNode pathpoint6 = this.getBetterNode(entity, pathpoint.x, pathpoint.y, pathpoint.z - 1, pathpoint1, j);
+		BetterNode pathpoint7 = this.getBetterNode(entity, pathpoint.x, pathpoint.y - 1, pathpoint.z, pathpoint1, j);
+		BetterNode pathpoint8 = this.getBetterNode(entity, pathpoint.x, pathpoint.y + 1, pathpoint.z, pathpoint1, j);
+
 		if (pathpoint3 != null && !pathpoint3.closed && pathpoint3.distanceTo(pathpoint2) < f) {
 			this.neighbors[i++] = pathpoint3;
 		}
@@ -38,6 +41,14 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 
 		if (pathpoint6 != null && !pathpoint6.closed && pathpoint6.distanceTo(pathpoint2) < f) {
 			this.neighbors[i++] = pathpoint6;
+		}
+
+		if (pathpoint7 != null && !pathpoint7.closed && pathpoint7.distanceTo(pathpoint2) < f) {
+			this.neighbors[i++] = pathpoint7;
+		}
+
+		if (pathpoint8 != null && !pathpoint8.closed && pathpoint8.distanceTo(pathpoint2) < f) {
+			this.neighbors[i++] = pathpoint8;
 		}
 
 		return i;
