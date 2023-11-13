@@ -1,8 +1,8 @@
 package baguchan.better_ai.mixin;
 
 import baguchan.better_ai.api.IHead;
-import baguchan.better_ai.api.IPath;
-import baguchan.better_ai.api.IPathGetter;
+import baguchan.better_ai.api.path.IPath;
+import baguchan.better_ai.api.path.IPathGetter;
 import baguchan.better_ai.path.BetterNode;
 import baguchan.better_ai.path.BetterPathFinder;
 import baguchan.better_ai.util.BlockPath;

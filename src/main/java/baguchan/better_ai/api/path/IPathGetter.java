@@ -1,4 +1,4 @@
-package baguchan.better_ai.api;
+package baguchan.better_ai.api.path;
 
 import baguchan.better_ai.path.BetterNode;
 import baguchan.better_ai.path.BetterPathFinder;

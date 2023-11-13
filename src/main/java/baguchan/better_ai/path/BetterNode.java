@@ -14,6 +14,7 @@ public class BetterNode extends Node {
 	public float h;
 	public float f;
 	public BetterNode cameFrom;
+	public float costMalus;
 	public boolean closed = false;
 
 	public BetterNode(int x, int y, int z) {

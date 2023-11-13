@@ -1,5 +1,6 @@
 package baguchan.better_ai.path;
 
+import baguchan.better_ai.api.path.IBlockPathGetter;
 import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
@@ -100,14 +101,18 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 					if (blockDistance < possibleDist) {
 						int k1 = this.worldSource.getBlockId(x1, y1, z1);
 						if (k1 > 0) {
-							Material material = Block.blocksList[k1].blockMaterial;
-
+							Block block = Block.blocksList[k1];
+							Material material = block.blockMaterial;
 							if (material == Material.water) {
 								return BlockPath.WATER;
 							}
 
 							if (material.blocksMotion()) {
 								return BlockPath.BLOCKED;
+							}
+
+							if (block instanceof IBlockPathGetter) {
+								return ((IBlockPathGetter) block).getBlockPath();
 							}
 						}
 					}

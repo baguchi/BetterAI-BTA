@@ -1,6 +1,6 @@
 package baguchan.better_ai.mixin;
 
-import baguchan.better_ai.api.IPath;
+import baguchan.better_ai.api.path.IPath;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.Path;

@@ -1,18 +1,17 @@
 package baguchan.better_ai.util;
 
-public enum BlockPath {
-	BLOCKED(-1.0F),
-	OPEN(0.0F),
-	WALKABLE(0.0F),
-	WALKABLE_DOOR(0.0F),
-	WATER(-1.0F),
-	DANGER(-1.0F),
-	FIRE(-8.0F),
-	LAVA(-8.0F),
-	DOOR_OPEN(0.0F),
-	DOOR_WOOD_CLOSED(-1.0F),
-	DOOR_IRON_CLOSED(-1.0F),
-	;
+public class BlockPath {
+	public static final BlockPath BLOCKED = new BlockPath(-1.0F);
+	public static final BlockPath OPEN = new BlockPath(0.0F);
+	public static final BlockPath WALKABLE = new BlockPath(0.0F);
+	public static final BlockPath WALKABLE_DOOR = new BlockPath(0.0F);
+	public static final BlockPath WATER = new BlockPath(-1.0F);
+	public static final BlockPath DANGER = new BlockPath(-1.0F);
+	public static final BlockPath FIRE = new BlockPath(-8.0F);
+	public static final BlockPath LAVA = new BlockPath(-8.0F);
+	public static final BlockPath DOOR_OPEN = new BlockPath(0.0F);
+	public static final BlockPath DOOR_WOOD_CLOSED = new BlockPath(-1.0F);
+	public static final BlockPath DOOR_IRON_CLOSED = new BlockPath(-1.0F);
 
 	private final float malus;
 

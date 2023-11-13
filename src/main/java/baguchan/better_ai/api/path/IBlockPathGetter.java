@@ -1,7 +1,7 @@
-package baguchan.better_ai.api;
+package baguchan.better_ai.api.path;
 
 import baguchan.better_ai.util.BlockPath;
 
-public interface IDangerBlock {
+public interface IBlockPathGetter {
 	BlockPath getBlockPath();
 }

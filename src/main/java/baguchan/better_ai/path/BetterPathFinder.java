@@ -1,7 +1,8 @@
 package baguchan.better_ai.path;
 
-import baguchan.better_ai.api.IPath;
-import baguchan.better_ai.api.IPathGetter;
+import baguchan.better_ai.api.path.IBlockPathGetter;
+import baguchan.better_ai.api.path.IPath;
+import baguchan.better_ai.api.path.IPathGetter;
 import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Lists;
 import net.minecraft.core.HitResult;
@@ -80,7 +81,7 @@ public class BetterPathFinder {
 
 			for (int j = 0; j < i; ++j) {
 				BetterNode pathpoint5 = this.neighbors[j];
-				float f1 = pathpoint4.g + pathpoint4.distanceTo(pathpoint5);
+				float f1 = pathpoint4.g + pathpoint4.distanceTo(pathpoint5) + pathpoint4.costMalus;
 				if (!pathpoint5.inOpenSet() || f1 < pathpoint5.g) {
 					pathpoint5.cameFrom = pathpoint4;
 					pathpoint5.g = f1;
@@ -155,6 +156,7 @@ public class BetterPathFinder {
 				--y;
 				if (y > 0) {
 					pathpoint1 = this.getBetterNode(x, y, z);
+
 				}
 				j1 = this.isFree(entity, x, y - 1, z, pathpoint);
 			}
@@ -164,6 +166,7 @@ public class BetterPathFinder {
 					return null;
 				}
 			}
+			pathpoint1.costMalus = ((IPath) entity).getPathfindingMalus(j1);
 		}
 
 		return pathpoint1;
@@ -217,7 +220,8 @@ public class BetterPathFinder {
 									return BlockPath.DOOR_OPEN;
 								}
 							} else {
-								Material material = Block.blocksList[k1].blockMaterial;
+								Block block = Block.blocksList[k1];
+								Material material = block.blockMaterial;
 								if (material.blocksMotion()) {
 									return BlockPath.BLOCKED;
 								}
@@ -231,6 +235,9 @@ public class BetterPathFinder {
 								}
 								if (material == Material.fire) {
 									return BlockPath.FIRE;
+								}
+								if (block instanceof IBlockPathGetter) {
+									return ((IBlockPathGetter) block).getBlockPath();
 								}
 							}
 						}
