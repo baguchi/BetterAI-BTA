@@ -1,6 +1,6 @@
 package baguchan.better_ai.mixin;
 
-import baguchan.better_ai.api.path.IPath;
+import baguchan.better_ai.api.IPath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.RenderGlobal;
 import net.minecraft.client.render.camera.ICamera;

@@ -1,6 +1,6 @@
 package baguchan.better_ai.path;
 
-import baguchan.better_ai.api.path.IBlockPathGetter;
+import baguchan.better_ai.api.IBlockPathGetter;
 import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;

@@ -1,8 +1,8 @@
 package baguchan.better_ai.path;
 
-import baguchan.better_ai.api.path.IBlockPathGetter;
-import baguchan.better_ai.api.path.IPath;
-import baguchan.better_ai.api.path.IPathGetter;
+import baguchan.better_ai.api.IBlockPathGetter;
+import baguchan.better_ai.api.IPath;
+import baguchan.better_ai.api.IPathGetter;
 import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Lists;
 import net.minecraft.core.HitResult;
@@ -165,8 +165,9 @@ public class BetterPathFinder {
 				if (!((IPathGetter) entity).canMoveIt(j1)) {
 					return null;
 				}
+				pathpoint1.costMalus = ((IPath) entity).getPathfindingMalus(j1);
 			}
-			pathpoint1.costMalus = ((IPath) entity).getPathfindingMalus(j1);
+
 		}
 
 		return pathpoint1;
