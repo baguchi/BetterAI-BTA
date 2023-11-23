@@ -1,6 +1,5 @@
 package baguchan.better_ai.mixin;
 
-import baguchan.better_ai.api.IHead;
 import baguchan.better_ai.api.IPath;
 import baguchan.better_ai.api.IPathGetter;
 import baguchan.better_ai.path.BetterNode;
@@ -17,24 +16,25 @@ import net.minecraft.core.world.pathfinder.Path;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.include.com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Map;
 
 @Mixin(value = EntityPathfinder.class, remap = false)
-public abstract class EntityPathfinderMixin extends EntityLiving implements IPath, IHead, IPathGetter {
+public abstract class EntityPathfinderMixin extends EntityLiving implements IPath, IPathGetter {
 	public List<BetterNode> nodeList = Lists.newArrayList();
 	public BetterPathFinder pathFinder;
-
-	protected float xHeadRot;
-	protected float yHeadRot;
-
-	protected float xHeadRotO;
-	protected float yHeadRotO;
+	@Shadow
+	protected Entity entityToAttack;
+	@Shadow
+	protected boolean hasAttacked = false;
 	@Shadow
 	private Path pathToEntity;
+
 	private Map<BlockPath, Float> pathfindingMalus = Maps.newHashMap();
 
 	public EntityPathfinderMixin(World world) {
@@ -47,76 +47,51 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 		pathFinder = new BetterPathFinder(world);
 	}
 
-	@Override
-	public void tick() {
-		this.xHeadRotO = this.xHeadRot;
-		this.yHeadRotO = this.yHeadRot;
-		this.xHeadRot = this.xRot;
-		this.yHeadRot = this.yRot;
-		super.tick();
+	@Inject(method = "updatePlayerActionState", at = @At("TAIL"))
+	public void tick(CallbackInfo ci) {
+		if (this.pathToEntity != null) {
+			//rewrite moving
+			Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
+			int i = MathHelper.floor_double(this.bb.minY + 0.5);
+			if (coordsForNextPath != null) {
+				float f3;
+				double x1 = coordsForNextPath.xCoord - this.x;
+				double z1 = coordsForNextPath.zCoord - this.z;
+				double y1 = coordsForNextPath.yCoord - (double) i;
+				float f2 = (float) (Math.atan2(z1, x1) * 180.0 / 3.1415927410125732) - 90.0f;
+				this.moveForward = this.moveSpeed;
+				for (f3 = f2 - this.yRot; f3 < -180.0f; f3 += 360.0f) {
+				}
+				while (f3 >= 180.0f) {
+					f3 -= 360.0f;
+				}
+				if (f3 > 30.0f) {
+					f3 = 30.0f;
+				}
+				if (f3 < -30.0f) {
+					f3 = -30.0f;
+				}
+				this.yRot += f3;
+				if (this.hasAttacked && this.entityToAttack != null) {
+					double d4 = x1 - this.x;
+					double d5 = z1 - this.z;
+					float f5 = this.yRot;
+					this.yRot = (float) (Math.atan2(d5, d4) * 180.0 / 3.1415927410125732) - 90.0f;
+					float f4 = (f5 - this.yRot + 90.0f) * 3.141593f / 180.0f;
+					this.moveStrafing = -MathHelper.sin(f4) * this.moveForward * 1.0f;
+					this.moveForward = MathHelper.cos(f4) * this.moveForward * 1.0f;
+				}
+				if (y1 > 0.0) {
+					this.isJumping = true;
+				}
+			}
+		}
 	}
 
 	@Redirect(method = "updatePlayerActionState", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/util/phys/Vec3d;squareDistanceTo(DDD)D"))
 	public double modifiredSqr(Vec3d instance, double d, double d1, double d2) {
 		Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
 		return coordsForNextPath.squareDistanceTo(this.x, canMoveDirect() ? this.y : coordsForNextPath.yCoord, this.z);
-	}
-
-	public void faceEntity(Entity entity, float f, float f1) {
-		if (this instanceof IPath) {
-			double d1;
-			double d = entity.x - this.x;
-			double d2 = entity.z - this.z;
-			if (entity instanceof EntityLiving) {
-				EntityLiving entityliving = (EntityLiving) entity;
-				d1 = this.y + (double) this.getHeadHeight() - (entityliving.y + (double) entityliving.getHeadHeight());
-			} else {
-				d1 = (entity.bb.minY + entity.bb.maxY) / 2.0 - (this.y + (double) this.getHeadHeight());
-			}
-			double d3 = MathHelper.sqrt_double(d * d + d2 * d2);
-			float f2 = (float) (Math.atan2(d2, d) * 180.0 / 3.1415927410125732) - 90.0f;
-			float f3 = (float) (-(Math.atan2(d1, d3) * 180.0 / 3.1415927410125732));
-			this.xHeadRot = -this.updateRotation(this.xHeadRot, f3, f1);
-			this.yHeadRot = this.updateRotation(this.yHeadRot, f2, f);
-		} else {
-			super.faceEntity(entity, f, f1);
-		}
-	}
-
-	private float updateRotation(float f, float f1, float f2) {
-		float f3;
-		for (f3 = f1 - f; f3 < -180.0f; f3 += 360.0f) {
-		}
-		while (f3 >= 180.0f) {
-			f3 -= 360.0f;
-		}
-		if (f3 > f2) {
-			f3 = f2;
-		}
-		if (f3 < -f2) {
-			f3 = -f2;
-		}
-		return f + f3;
-	}
-
-	@Override
-	public float getXHeadRot() {
-		return this.xHeadRot;
-	}
-
-	@Override
-	public float getYHeadRot() {
-		return this.yHeadRot;
-	}
-
-	@Override
-	public float getXHeadRotO() {
-		return this.xHeadRotO;
-	}
-
-	@Override
-	public float getYHeadRotO() {
-		return this.yHeadRotO;
 	}
 
 	@Override
