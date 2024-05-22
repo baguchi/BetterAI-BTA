@@ -15,6 +15,7 @@ import net.minecraft.core.util.phys.AABB;
 import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.IdHashMap;
+import net.minecraft.core.world.weather.Weather;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,10 +25,10 @@ public class BetterPathFinder {
 	private final BetterBinaryHeap openSet = new BetterBinaryHeap();
 	private final IdHashMap closedSet = new IdHashMap();
 	protected final BetterNode[] neighbors = new BetterNode[32];
-
 	public BetterPathFinder(World worldSource) {
 		this.worldSource = worldSource;
 	}
+
 
 	public BetterPath findPath(Entity entity, Entity target, float distance) {
 		return this.findPath(entity, target.x, target.bb.minY, target.z, distance);
@@ -37,7 +38,7 @@ public class BetterPathFinder {
 		return this.findPath(entity, (float) xt + 0.5F, (double) ((float) yt - 0.5F), (double) ((float) zt + 0.5F), distance);
 	}
 
-	private BetterPath findPath(Entity entity, double xt, double yt, double zt, float distance) {
+	protected BetterPath findPath(Entity entity, double xt, double yt, double zt, float distance) {
 		this.openSet.clear();
 		this.closedSet.clear();
 		BetterNode pathpoint = this.getBetterNode(MathHelper.floor_double(entity.bb.minX), MathHelper.floor_double(entity.bb.minY), MathHelper.floor_double(entity.bb.minZ));
@@ -163,6 +164,11 @@ public class BetterPathFinder {
 
 			if (entity instanceof IPathGetter) {
 				if (!((IPathGetter) entity).canMoveIt(j1)) {
+					return null;
+				}
+
+				float f = entity.getBrightness(1.0F);
+				if (((IPathGetter) entity).canHideFromSkyLight() && f > 0.5F && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
 					return null;
 				}
 				pathpoint1.costMalus = ((IPath) entity).getPathfindingMalus(j1);

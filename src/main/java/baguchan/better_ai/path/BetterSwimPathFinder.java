@@ -17,7 +17,6 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 		super(worldSource);
 		this.worldSource = worldSource;
 	}
-
 	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
 		int i = 0;
 		int j = 0;

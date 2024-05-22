@@ -3,6 +3,7 @@ package baguchan.better_ai.mixin;
 import baguchan.better_ai.api.IPath;
 import baguchan.better_ai.api.IPathGetter;
 import baguchan.better_ai.path.BetterNode;
+import baguchan.better_ai.path.BetterPath;
 import baguchan.better_ai.path.BetterPathFinder;
 import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Maps;
@@ -54,6 +55,7 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 			Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
 			int i = MathHelper.floor_double(this.bb.minY + 0.5);
 			if (coordsForNextPath != null) {
+
 				float f3;
 				double x1 = coordsForNextPath.xCoord - this.x;
 				double z1 = coordsForNextPath.zCoord - this.z;
@@ -112,6 +114,16 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 	@Override
 	public BetterPathFinder getPathFinder() {
 		return this.pathFinder;
+	}
+
+	@Override
+	public Path getTargetPath() {
+		return pathToEntity;
+	}
+
+	@Override
+	public void setTargetPath(BetterPath betterPath) {
+		this.pathToEntity = betterPath;
 	}
 
 	public float getPathfindingMalus(BlockPath p_21440_) {

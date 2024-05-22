@@ -1,11 +1,14 @@
 package baguchan.better_ai.api;
 
 import baguchan.better_ai.path.BetterNode;
+import baguchan.better_ai.path.BetterPath;
 import baguchan.better_ai.path.BetterPathFinder;
 import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.entity.EntityLiving;
+import net.minecraft.core.world.pathfinder.Path;
 import org.spongepowered.include.com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public interface IPathGetter {
@@ -56,9 +59,26 @@ public interface IPathGetter {
 		}
 	}
 
+	default void setTargetPath(EntityLiving entityLiving, BetterPath betterPath) {
+		if (entityLiving instanceof IPath) {
+			((IPath) entityLiving).setTargetPath(betterPath);
+		}
+	}
+
+	@Nullable
+	default Path getTargetPath(EntityLiving entityLiving) {
+		if (entityLiving instanceof IPath) {
+			return ((IPath) entityLiving).getTargetPath();
+		}
+		return null;
+	}
+
 
 	default boolean canMoveDirect() {
 		return false;
 	}
 
+	default boolean canHideFromSkyLight() {
+		return false;
+	}
 }

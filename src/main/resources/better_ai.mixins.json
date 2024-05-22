@@ -1,16 +1,17 @@
 {
-    "required": true,
-    "minVersion": "0.8",
+  "required": true,
+  "minVersion": "0.8",
   "package": "baguchan.better_ai.mixin",
-    "compatibilityLevel": "JAVA_8",
-    "mixins": [
-      "EntityPathfinderMixin",
-      "WorldMixin"
-    ],
-    "client": [
-      "RenderGrobalMixin"
-    ],
-    "injectors": {
-        "defaultRequire": 1
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "EntityPathfinderMixin",
+    "EntitySkeletonMixin",
+    "WorldMixin"
+  ],
+  "client": [
+    "RenderGrobalMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
   }
 }
