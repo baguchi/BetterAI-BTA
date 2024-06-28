@@ -15,6 +15,6 @@ public abstract class EntitySkeletonMixin extends EntityMonster implements IPath
 
 	@Override
 	public boolean canHideFromSkyLight() {
-		return !this.world.canBlockSeeTheSky((int) this.x, (int) this.y, (int) this.z);
+		return true;
 	}
 }

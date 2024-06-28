@@ -8,7 +8,7 @@ public class BlockPath {
 	public static final BlockPath WATER = new BlockPath(0.0F);
 	public static final BlockPath DANGER = new BlockPath(-1.0F);
 	public static final BlockPath FIRE = new BlockPath(8.0F);
-	public static final BlockPath LAVA = new BlockPath(-1.0F);
+	public static final BlockPath LAVA = new BlockPath(16.0F);
 	public static final BlockPath DOOR_OPEN = new BlockPath(0.0F);
 	public static final BlockPath DOOR_WOOD_CLOSED = new BlockPath(-1.0F);
 	public static final BlockPath DOOR_IRON_CLOSED = new BlockPath(-1.0F);

@@ -16,7 +16,8 @@ public class WorldMixin {
 	public void getPathToEntity(Entity entity, Entity entityToTravelTo, float distance, CallbackInfoReturnable<Path> cir) {
 		if (entity instanceof IPath && entity instanceof IPathGetter) {
 			if (((IPath) entity).getPathFinder() != null) {
-				cir.setReturnValue(((IPath) entity).getPathFinder().findPath(entity, entityToTravelTo, distance));
+				((IPath) entity).getPathFinder().moveTo(entity, entityToTravelTo, distance);
+				cir.setReturnValue(((IPath) entity).getPathFinder().getPath());
 			}
 		}
 	}
@@ -25,7 +26,9 @@ public class WorldMixin {
 	public void getEntityPathToXYZ(Entity entity, int i, int j, int k, float f, CallbackInfoReturnable<Path> cir) {
 		if (entity instanceof IPath && entity instanceof IPathGetter) {
 			if (((IPath) entity).getPathFinder() != null) {
-				cir.setReturnValue(((IPath) entity).getPathFinder().findPath(entity, i, j, k, f));
+				((IPath) entity).getPathFinder().moveTo(entity, i, j, k, f);
+				cir.setReturnValue(((IPath) entity).getPathFinder().getPath());
+
 			}
 		}
 	}

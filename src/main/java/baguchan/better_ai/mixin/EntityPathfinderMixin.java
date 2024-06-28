@@ -45,7 +45,8 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 	@Override
 	protected void init() {
 		super.init();
-		pathFinder = new BetterPathFinder(world);
+		EntityPathfinder entityPathfinder = (EntityPathfinder) (Object) this;
+		pathFinder = new BetterPathFinder(world, entityPathfinder);
 	}
 
 	@Inject(method = "updatePlayerActionState", at = @At("TAIL"))
@@ -94,6 +95,11 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 	public double modifiredSqr(Vec3d instance, double d, double d1, double d2) {
 		Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
 		return coordsForNextPath.squareDistanceTo(this.x, canMoveDirect() ? this.y : coordsForNextPath.yCoord, this.z);
+	}
+
+	@Redirect(method = "updatePlayerActionState", at = @At(value = "FIELD", target = "Lnet/minecraft/core/entity/EntityPathfinder;bbWidth:F"))
+	public float modifiredRange(EntityPathfinder instance) {
+		return (this.bbWidth) / 2.0F;
 	}
 
 	@Override

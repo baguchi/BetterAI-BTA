@@ -10,6 +10,7 @@ import net.minecraft.core.block.Block;
 import net.minecraft.core.block.BlockDoor;
 import net.minecraft.core.block.material.Material;
 import net.minecraft.core.entity.Entity;
+import net.minecraft.core.entity.EntityPathfinder;
 import net.minecraft.core.util.helper.MathHelper;
 import net.minecraft.core.util.phys.AABB;
 import net.minecraft.core.util.phys.Vec3d;
@@ -17,6 +18,7 @@ import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.IdHashMap;
 import net.minecraft.core.world.weather.Weather;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,10 +27,78 @@ public class BetterPathFinder {
 	private final BetterBinaryHeap openSet = new BetterBinaryHeap();
 	private final IdHashMap closedSet = new IdHashMap();
 	protected final BetterNode[] neighbors = new BetterNode[32];
-	public BetterPathFinder(World worldSource) {
+	private BetterPath path;
+	public final EntityPathfinder entityPathfinder;
+
+	public BetterPathFinder(World worldSource, EntityPathfinder entityPathfinder) {
 		this.worldSource = worldSource;
+		this.entityPathfinder = entityPathfinder;
 	}
 
+
+	public boolean moveTo(Entity entity, Entity target, float distance) {
+		BetterPath path = this.findPath(entity, target, distance);
+		return path != null && this.moveTo(path);
+	}
+
+	public boolean moveTo(Entity entity, int x, int y, int z, float distance) {
+		BetterPath path = this.findPath(entity, x, y, z, distance);
+		return path != null && this.moveTo(path);
+	}
+
+	public boolean isDone() {
+		return this.path == null || this.path.isDone();
+	}
+
+	public boolean isInProgress() {
+		return !this.isDone();
+	}
+
+	public BetterPath getPath() {
+		return path;
+	}
+
+	public boolean moveTo(@Nullable BetterPath p_26537_) {
+		if (p_26537_ == null) {
+			this.path = null;
+			return false;
+		} else {
+			if (!p_26537_.sameAs(this.path)) {
+				this.path = p_26537_;
+			}
+
+			if (this.isDone()) {
+				return false;
+			} else {
+				this.trimPath();
+				if (this.path.getNodes().length <= 0) {
+					return false;
+				} else {
+					//this.speedModifier = p_26538_;
+					return true;
+				}
+			}
+		}
+	}
+
+	protected void trimPath() {
+		if (this.path != null) {
+
+			if (!((IPathGetter) entityPathfinder).canHideFromSkyLight() || this.worldSource.canBlockSeeTheSky((int) this.entityPathfinder.x, (int) (this.entityPathfinder.y + 0.5), (int) this.entityPathfinder.z)) {
+				return;
+			}
+
+			for (int i = 0; i < this.path.getNodes().length; i++) {
+				BetterNode node = this.path.getNodes()[i];
+				float f = entityPathfinder.getBrightness(1.0F);
+				if (((IPathGetter) entityPathfinder).canHideFromSkyLight() && f > 0.5F && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(node.x), MathHelper.floor_double(node.y), MathHelper.floor_double(node.z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
+					this.path.truncateNodes(i);
+					return;
+				}
+			}
+
+		}
+	}
 
 	public BetterPath findPath(Entity entity, Entity target, float distance) {
 		return this.findPath(entity, target.x, target.bb.minY, target.z, distance);
@@ -116,18 +186,22 @@ public class BetterPathFinder {
 		BetterNode pathpoint5 = this.getBetterNode(entity, pathpoint.x + 1, pathpoint.y, pathpoint.z, pathpoint1, j);
 		BetterNode pathpoint6 = this.getBetterNode(entity, pathpoint.x, pathpoint.y, pathpoint.z - 1, pathpoint1, j);
 		if (pathpoint3 != null && !pathpoint3.closed && pathpoint3.distanceTo(pathpoint2) < f) {
+			if (isNeighborValid(pathpoint3, pathpoint))
 			this.neighbors[i++] = pathpoint3;
 		}
 
 		if (pathpoint4 != null && !pathpoint4.closed && pathpoint4.distanceTo(pathpoint2) < f) {
+			if (isNeighborValid(pathpoint4, pathpoint))
 			this.neighbors[i++] = pathpoint4;
 		}
 
 		if (pathpoint5 != null && !pathpoint5.closed && pathpoint5.distanceTo(pathpoint2) < f) {
+			if (isNeighborValid(pathpoint5, pathpoint))
 			this.neighbors[i++] = pathpoint5;
 		}
 
 		if (pathpoint6 != null && !pathpoint6.closed && pathpoint6.distanceTo(pathpoint2) < f) {
+			if (isNeighborValid(pathpoint6, pathpoint))
 			this.neighbors[i++] = pathpoint6;
 		}
 
@@ -154,6 +228,7 @@ public class BetterPathFinder {
 					return null;
 				}
 
+
 				--y;
 				if (y > 0) {
 					pathpoint1 = this.getBetterNode(x, y, z);
@@ -163,20 +238,21 @@ public class BetterPathFinder {
 			}
 
 			if (entity instanceof IPathGetter) {
-				if (!((IPathGetter) entity).canMoveIt(j1)) {
+				if (!((IPathGetter) entity).canMoveIt(j1) && ((IPathGetter) entity).canMoveIt(this.getBlockPath(entity, MathHelper.floor_double(entity.x), MathHelper.floor_double(entity.y), MathHelper.floor_double(entity.z)))) {
 					return null;
-				}
-
-				float f = entity.getBrightness(1.0F);
-				if (((IPathGetter) entity).canHideFromSkyLight() && f > 0.5F && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
-					return null;
-				}
+				} else {
+					j1 = j1 == BlockPath.BLOCKED ? BlockPath.WALKABLE : j1;
 				pathpoint1.costMalus = ((IPath) entity).getPathfindingMalus(j1);
+				}
 			}
 
 		}
 
 		return pathpoint1;
+	}
+
+	protected boolean isNeighborValid(@Nullable BetterNode p_77627_, BetterNode p_77628_) {
+		return p_77627_ != null && !p_77627_.closed && (p_77627_.costMalus >= 0.0F || p_77628_.costMalus < 0.0F);
 	}
 
 	protected final BetterNode getBetterNode(int x, int y, int z) {
@@ -219,34 +295,9 @@ public class BetterPathFinder {
 				for (int z1 = z + (flag3 ? pathpoint.z : 0); z1 < z + (flag3 ? 0 : pathpoint.z); ++z1) {
 					double blockDistance = srcVec.distanceTo(Vec3d.createVector(x1, y1, z1));
 					if (blockDistance < possibleDist) {
-						int k1 = this.worldSource.getBlockId(x1, y1, z1);
-						if (k1 > 0) {
-							if (Block.blocksList[k1] instanceof BlockDoor) {
-								int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
-								if (!BlockDoor.isOpen(l1)) {
-									return BlockPath.DOOR_OPEN;
-								}
-							} else {
-								Block block = Block.blocksList[k1];
-								Material material = block.blockMaterial;
-								if (material.blocksMotion()) {
-									return BlockPath.BLOCKED;
-								}
-
-								if (material == Material.water) {
-									return BlockPath.WATER;
-								}
-
-								if (material == Material.lava) {
-									return BlockPath.LAVA;
-								}
-								if (material == Material.fire) {
-									return BlockPath.FIRE;
-								}
-								if (block instanceof IBlockPathGetter) {
-									return ((IBlockPathGetter) block).getBlockPath();
-								}
-							}
+						BlockPath blockPath = this.getBlockPath(entity, x1, y1, z1);
+						if (blockPath != null) {
+							return blockPath;
 						}
 					}
 				}
@@ -254,6 +305,41 @@ public class BetterPathFinder {
 		}
 
 		return BlockPath.OPEN;
+	}
+
+	private BlockPath getBlockPath(Entity entity, int x1, int y1, int z1) {
+		int k1 = this.worldSource.getBlockId(x1, y1, z1);
+		if (k1 > 0) {
+			if (Block.blocksList[k1] instanceof BlockDoor) {
+				int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
+				if (!BlockDoor.isOpen(l1)) {
+					return BlockPath.DOOR_OPEN;
+				}
+			} else {
+				Block block = Block.blocksList[k1];
+				Material material = block.blockMaterial;
+
+
+				if (material == Material.water) {
+					return BlockPath.WATER;
+				}
+
+				if (material == Material.lava) {
+					return BlockPath.LAVA;
+				}
+				if (material == Material.fire) {
+					return BlockPath.FIRE;
+				}
+				if (material.blocksMotion()) {
+					return BlockPath.BLOCKED;
+				}
+
+				if (block instanceof IBlockPathGetter) {
+					return ((IBlockPathGetter) block).getBlockPath();
+				}
+			}
+		}
+		return null;
 	}
 
 	private BetterPath reconstructPath(BetterNode p_77435_) {

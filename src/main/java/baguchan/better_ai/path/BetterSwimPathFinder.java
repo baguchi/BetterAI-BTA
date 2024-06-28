@@ -6,6 +6,7 @@ import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
 import net.minecraft.core.block.material.Material;
 import net.minecraft.core.entity.Entity;
+import net.minecraft.core.entity.EntityPathfinder;
 import net.minecraft.core.util.phys.AABB;
 import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.World;
@@ -13,8 +14,8 @@ import net.minecraft.core.world.World;
 public class BetterSwimPathFinder extends BetterPathFinder {
 	private final World worldSource;
 
-	public BetterSwimPathFinder(World worldSource) {
-		super(worldSource);
+	public BetterSwimPathFinder(World worldSource, EntityPathfinder entityPathfinder) {
+		super(worldSource, entityPathfinder);
 		this.worldSource = worldSource;
 	}
 	protected int getNeighbors(Entity entity, BetterNode pathpoint, BetterNode pathpoint1, BetterNode pathpoint2, float f) {
