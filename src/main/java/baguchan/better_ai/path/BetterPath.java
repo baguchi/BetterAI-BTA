@@ -47,13 +47,13 @@ public class BetterPath extends Path {
 
 	public Vec3d getPos(Entity entity) {
 		if (this.isDone()) {
-			return Vec3d.createVector(entity.x, entity.y, entity.z).addVector(-0.5D, 0, -0.5D);
+			return Vec3d.createVector(entity.x, entity.y, entity.z);
 		}
 
 		double x = (double) this.nodes[this.index].x + (double) ((int) (entity.bbWidth + 2.0F)) * 0.5;
 		double y = (double) this.nodes[this.index].y;
 		double z = (double) this.nodes[this.index].z + (double) ((int) (entity.bbWidth + 2.0F)) * 0.5;
-		return Vec3d.createVector(x, y, z).addVector(-0.5D, 0, -0.5D);
+		return Vec3d.createVector(x, y, z);
 	}
 
 	public boolean sameAs(@Nullable BetterPath p_77386_) {
