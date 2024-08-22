@@ -1,5 +1,6 @@
 package baguchan.better_ai.path;
 
+import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.util.helper.MathHelper;
 import net.minecraft.core.util.phys.Vec3d;
 import net.minecraft.core.world.pathfinder.Node;
@@ -16,6 +17,7 @@ public class BetterNode extends Node {
 	public BetterNode cameFrom;
 	public float costMalus;
 	public boolean closed = false;
+	public BlockPath type = BlockPath.BLOCKED;
 
 	public BetterNode(int x, int y, int z) {
 		super(x, y, z);

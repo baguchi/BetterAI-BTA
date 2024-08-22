@@ -40,11 +40,6 @@ public interface IPathGetter {
 		return null;
 	}
 
-
-	default boolean canMoveIt(BlockPath blockPath) {
-		return blockPath != BlockPath.LAVA && blockPath != BlockPath.DANGER && blockPath != BlockPath.FIRE;
-	}
-
 	default float getPathfindingMalus(EntityLiving entityLiving, BlockPath p_21440_) {
 		if (entityLiving instanceof IPath) {
 			return ((IPath) entityLiving).getPathfindingMalus(p_21440_);
