@@ -6,9 +6,9 @@ public class BlockPath {
 	public static final BlockPath WALKABLE = new BlockPath(0.0F);
 	public static final BlockPath WALKABLE_DOOR = new BlockPath(0.0F);
 	public static final BlockPath WATER = new BlockPath(0.0F);
-	public static final BlockPath DANGER = new BlockPath(8.0F);
-	public static final BlockPath DAMAGE = new BlockPath(-1.0F);
-	public static final BlockPath DANGER_FIRE = new BlockPath(8.0F);
+	public static final BlockPath DANGER = new BlockPath(-1.0F);
+	public static final BlockPath DAMAGE = new BlockPath(8.0F);
+	public static final BlockPath DANGER_FIRE = new BlockPath(-1.0F);
 	public static final BlockPath DAMAGE_FIRE = new BlockPath(16.0F);
 	public static final BlockPath LAVA = new BlockPath(-1.0F);
 	public static final BlockPath DOOR_OPEN = new BlockPath(0.0F);

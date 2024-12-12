@@ -87,14 +87,13 @@ public class BetterPathFinder {
 	protected void trimPath() {
 		if (this.path != null) {
 
-			if (!((IPathGetter) entityPathfinder).canHideFromSkyLight()) {
+			if (this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(this.entityPathfinder.x), MathHelper.floor_double(this.entityPathfinder.y + 0.5F), MathHelper.floor_double(this.entityPathfinder.z))) {
 				return;
 			}
 
 			for (int i = 0; i < this.path.getNodes().length; i++) {
 				BetterNode node = this.path.getNodes()[i];
-				float f = entityPathfinder.getBrightness(1.0F);
-				if (((IPathGetter) entityPathfinder).canHideFromSkyLight() && f > 0.5F && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(node.x), MathHelper.floor_double(node.y), MathHelper.floor_double(node.z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
+				if (((IPathGetter) entityPathfinder).canHideFromSkyLight() && this.worldSource.isDaytime() && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(node.x), MathHelper.floor_double(node.y), MathHelper.floor_double(node.z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
 					this.path.truncateNodes(i);
 					return;
 				}
@@ -242,7 +241,9 @@ public class BetterPathFinder {
 					&& height > 0
 					&& (pathtype != BlockPath.FENCE || this.canWalkOverFences())
 					&& pathtype != BlockPath.UNPASSABLE_RAIL
-					&& pathtype != BlockPath.TRAPDOOR) {
+					&& pathtype != BlockPath.TRAPDOOR
+					&& pathtype != DANGER_FIRE
+					&& pathtype != DANGER) {
 					node = this.tryJumpOn(x, y, z, height, floorHeight, direction);
 				} else if (!this.isAmphibious() && pathtype == WATER && !this.canFloat()) {
 					node = this.tryFindFirstNonWaterBelow(x, y, z, node);
@@ -516,6 +517,7 @@ public class BetterPathFinder {
 
 	private BlockPath getBlockPath(int x1, int y1, int z1) {
 		int k1 = this.worldSource.getBlockId(x1, y1, z1);
+		int k2 = this.worldSource.getBlockId(MathHelper.floor_double(this.entityPathfinder.x), MathHelper.floor_double(this.entityPathfinder.y), MathHelper.floor_double(this.entityPathfinder.z));
 		if (k1 > 0) {
 			if (Block.blocksList[k1] instanceof BlockDoor) {
 				int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
@@ -523,7 +525,7 @@ public class BetterPathFinder {
 					return BlockPath.DOOR_OPEN;
 				}
 			} else {
-				Block block = Block.blocksList[k1];
+				Block block = Block.getBlock(k1);
 				Material material = block.blockMaterial;
 
 
@@ -532,22 +534,41 @@ public class BetterPathFinder {
 				}
 
 				if (material == Material.lava) {
-					return LAVA;
+					return this.checkSameBlockPath(k2, LAVA);
 				}
 				if (material == Material.fire) {
-					return BlockPath.DAMAGE_FIRE;
+					return this.checkSameBlockPath(k2, DANGER_FIRE);
 				}
 				if (material.blocksMotion()) {
-					return BlockPath.BLOCKED;
+					return this.checkSameBlockPath(k2, BlockPath.BLOCKED);
 				}
 
 				if (block instanceof IBlockPathGetter) {
-					return ((IBlockPathGetter) block).getBlockPath();
+					return this.checkSameBlockPath(k2, ((IBlockPathGetter) block).getBlockPath());
 				}
 			}
 		}
 		return BlockPath.OPEN;
 	}
+
+	private BlockPath checkSameBlockPath(int id, BlockPath blockPath) {
+		if (id > 0) {
+			Block block = Block.getBlock(id);
+			Material material2 = block.blockMaterial;
+			if (material2 == Material.lava && blockPath == LAVA || material2 == Material.fire && blockPath == DANGER_FIRE) {
+				return DAMAGE_FIRE;
+			}
+			if (material2.blocksMotion() && blockPath == BLOCKED) {
+				return DAMAGE;
+			}
+
+			if (block instanceof IBlockPathGetter && ((IBlockPathGetter) block).getBlockPath() == DANGER && blockPath == DANGER) {
+				return DAMAGE;
+			}
+		}
+		return blockPath;
+	}
+
 
 	private BetterPath reconstructPath(BetterNode p_77435_) {
 		List<BetterNode> list = Lists.newArrayList();
