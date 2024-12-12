@@ -8,12 +8,13 @@ import baguchan.better_ai.path.BetterPathFinder;
 import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Maps;
 import net.minecraft.core.entity.Entity;
-import net.minecraft.core.entity.EntityLiving;
-import net.minecraft.core.entity.EntityPathfinder;
+import net.minecraft.core.entity.Mob;
+import net.minecraft.core.entity.MobPathfinder;
 import net.minecraft.core.util.helper.MathHelper;
-import net.minecraft.core.util.phys.Vec3d;
+import net.minecraft.core.util.phys.Vec3;
 import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.Path;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,12 +26,12 @@ import org.spongepowered.include.com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 
-@Mixin(value = EntityPathfinder.class, remap = false)
-public abstract class EntityPathfinderMixin extends EntityLiving implements IPath, IPathGetter {
+@Mixin(value = MobPathfinder.class, remap = false)
+public abstract class MobPathfinderMixin extends Mob implements IPath, IPathGetter {
 	public List<BetterNode> nodeList = Lists.newArrayList();
 	public BetterPathFinder pathFinder;
 	@Shadow
-	protected Entity entityToAttack;
+	protected @Nullable Entity target;
 	@Shadow
 	protected boolean hasAttacked = false;
 	@Shadow
@@ -38,29 +39,28 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 
 	private Map<BlockPath, Float> pathfindingMalus = Maps.newHashMap();
 
-	public EntityPathfinderMixin(World world) {
+	public MobPathfinderMixin(World world) {
 		super(world);
 	}
 
-	@Override
-	protected void init() {
-		super.init();
-		EntityPathfinder entityPathfinder = (EntityPathfinder) (Object) this;
+	@Inject(method = "<init>", at = @At("TAIL"))
+	public void init(World world, CallbackInfo ci) {
+		MobPathfinder entityPathfinder = (MobPathfinder) (Object) this;
 		pathFinder = new BetterPathFinder(world, entityPathfinder);
 	}
 
-	@Inject(method = "updatePlayerActionState", at = @At("TAIL"))
+	@Inject(method = "updateAI", at = @At("TAIL"))
 	public void tick(CallbackInfo ci) {
 		if (this.pathToEntity != null) {
 			//rewrite moving
-			Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
-			int i = MathHelper.floor_double(this.bb.minY + 0.5);
+			Vec3 coordsForNextPath = this.pathToEntity.getPos(this);
+			int i = MathHelper.floor(this.bb.minY + 0.5);
 			if (coordsForNextPath != null) {
 
 				float f3;
-				double x1 = coordsForNextPath.xCoord - this.x;
-				double z1 = coordsForNextPath.zCoord - this.z;
-				double y1 = coordsForNextPath.yCoord - (double) i;
+				double x1 = coordsForNextPath.x - this.x;
+				double z1 = coordsForNextPath.z - this.z;
+				double y1 = coordsForNextPath.y - (double) i;
 				float f2 = (float) (Math.atan2(z1, x1) * 180.0 / 3.1415927410125732) - 90.0f;
 				this.moveForward = this.moveSpeed;
 				for (f3 = f2 - this.yRot; f3 < -180.0f; f3 += 360.0f) {
@@ -75,7 +75,7 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 					f3 = -30.0f;
 				}
 				this.yRot += f3;
-				if (this.hasAttacked && this.entityToAttack != null) {
+				if (this.hasAttacked && this.target != null) {
 					double d4 = x1 - this.x;
 					double d5 = z1 - this.z;
 					float f5 = this.yRot;
@@ -91,14 +91,14 @@ public abstract class EntityPathfinderMixin extends EntityLiving implements IPat
 		}
 	}
 
-	@Redirect(method = "updatePlayerActionState", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/util/phys/Vec3d;squareDistanceTo(DDD)D"))
-	public double modifiredSqr(Vec3d instance, double d, double d1, double d2) {
-		Vec3d coordsForNextPath = this.pathToEntity.getPos(this);
-		return coordsForNextPath.squareDistanceTo(this.x, canMoveDirect() ? this.y : coordsForNextPath.yCoord, this.z);
+	@Redirect(method = "updateAI", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/util/phys/Vec3;distanceToSquared(DDD)D"))
+	public double modifiredSqr(Vec3 instance, double d, double d1, double d2) {
+		Vec3 coordsForNextPath = this.pathToEntity.getPos(this);
+		return coordsForNextPath.distanceToSquared(this.x, canMoveDirect() ? this.y : coordsForNextPath.y, this.z);
 	}
 
-	@Redirect(method = "updatePlayerActionState", at = @At(value = "FIELD", target = "Lnet/minecraft/core/entity/EntityPathfinder;bbWidth:F"))
-	public float modifiredRange(EntityPathfinder instance) {
+	@Redirect(method = "updateAI", at = @At(value = "FIELD", target = "Lnet/minecraft/core/entity/MobPathfinder;bbWidth:F"))
+	public float modifiredRange(MobPathfinder instance) {
 		return (this.bbWidth) / 2.0F;
 	}
 

@@ -4,8 +4,8 @@
   "package": "baguchan.better_ai.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "EntityPathfinderMixin",
     "EntitySkeletonMixin",
+    "MobPathfinderMixin",
     "WorldMixin"
   ],
   "client": [

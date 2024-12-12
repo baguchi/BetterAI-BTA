@@ -2,7 +2,7 @@ package baguchan.better_ai.path;
 
 import baguchan.better_ai.util.BlockPath;
 import net.minecraft.core.util.helper.MathHelper;
-import net.minecraft.core.util.phys.Vec3d;
+import net.minecraft.core.util.phys.Vec3;
 import net.minecraft.core.world.pathfinder.Node;
 
 public class BetterNode extends Node {
@@ -31,10 +31,10 @@ public class BetterNode extends Node {
 		return j & 255 | (i & 32767) << 8 | (k & 32767) << 24 | (i >= 0 ? 0 : Integer.MIN_VALUE) | (k >= 0 ? 0 : '耀');
 	}
 
-	public float distanceManhattan(Vec3d p_77307_) {
-		float f = (float) Math.abs(p_77307_.xCoord - this.x);
-		float f1 = (float) Math.abs(p_77307_.yCoord - this.y);
-		float f2 = (float) Math.abs(p_77307_.zCoord - this.z);
+	public float distanceManhattan(Vec3 p_77307_) {
+		float f = (float) Math.abs(p_77307_.x - this.x);
+		float f1 = (float) Math.abs(p_77307_.y - this.y);
+		float f2 = (float) Math.abs(p_77307_.z - this.z);
 		return f + f1 + f2;
 	}
 

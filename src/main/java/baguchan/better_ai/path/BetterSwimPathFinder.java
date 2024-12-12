@@ -2,19 +2,20 @@ package baguchan.better_ai.path;
 
 import baguchan.better_ai.api.IBlockPathGetter;
 import baguchan.better_ai.util.BlockPath;
-import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
+import net.minecraft.core.block.Blocks;
 import net.minecraft.core.block.material.Material;
 import net.minecraft.core.entity.Entity;
-import net.minecraft.core.entity.EntityPathfinder;
+import net.minecraft.core.entity.MobPathfinder;
 import net.minecraft.core.util.phys.AABB;
-import net.minecraft.core.util.phys.Vec3d;
+import net.minecraft.core.util.phys.HitResult;
+import net.minecraft.core.util.phys.Vec3;
 import net.minecraft.core.world.World;
 
 public class BetterSwimPathFinder extends BetterPathFinder {
 	private final World worldSource;
 
-	public BetterSwimPathFinder(World worldSource, EntityPathfinder entityPathfinder) {
+	public BetterSwimPathFinder(World worldSource, MobPathfinder entityPathfinder) {
 		super(worldSource, entityPathfinder);
 		this.worldSource = worldSource;
 	}
@@ -84,10 +85,10 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 			flag3 = true;
 		}
 
-		Vec3d srcVec = Vec3d.createVector(x, y, z);
-		Vec3d destVec = srcVec.addVector(pathpoint.x, pathpoint.y, pathpoint.z);
-		AABB collisionBB = AABB.getBoundingBox(x - 1F, y - 1F, z - 1F, x, y, z).expand(pathpoint.x, pathpoint.y, pathpoint.z).offset(pathpoint.x / 2, pathpoint.y / 2, pathpoint.z / 2);
-		HitResult interceptPos = collisionBB.func_1169_a(srcVec, destVec);
+		Vec3 srcVec = Vec3.getPermanentVec3(x, y, z);
+		Vec3 destVec = srcVec.add(pathpoint.x, pathpoint.y, pathpoint.z);
+		AABB collisionBB = AABB.getPermanentBB(x - 1F, y - 1F, z - 1F, x, y, z).expand(pathpoint.x, pathpoint.y, pathpoint.z).move(pathpoint.x / 2, pathpoint.y / 2, pathpoint.z / 2);
+		HitResult interceptPos = collisionBB.clip(srcVec, destVec);
 		double possibleDist = 0.0;
 		if (interceptPos != null) {
 			possibleDist = srcVec.distanceTo(interceptPos.location);
@@ -97,12 +98,12 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 		for (int x1 = x + (flag ? pathpoint.x : 0); x1 < x + (flag ? 0 : pathpoint.x); ++x1) {
 			for (int y1 = y + (flag2 ? pathpoint.y : 0); y1 < y + (flag2 ? 0 : pathpoint.y); ++y1) {
 				for (int z1 = z + (flag3 ? pathpoint.z : 0); z1 < z + (flag3 ? 0 : pathpoint.z); ++z1) {
-					double blockDistance = srcVec.distanceTo(Vec3d.createVector(x1, y1, z1));
+					double blockDistance = srcVec.distanceTo(Vec3.getPermanentVec3(x1, y1, z1));
 					if (blockDistance < possibleDist) {
 						int k1 = this.worldSource.getBlockId(x1, y1, z1);
 						if (k1 > 0) {
-							Block block = Block.blocksList[k1];
-							Material material = block.blockMaterial;
+							Block block = Blocks.blocksList[k1];
+							Material material = block.getMaterial();
 							if (material == Material.water) {
 								return BlockPath.WATER;
 							}
@@ -111,8 +112,8 @@ public class BetterSwimPathFinder extends BetterPathFinder {
 								return BlockPath.BLOCKED;
 							}
 
-							if (block instanceof IBlockPathGetter) {
-								return ((IBlockPathGetter) block).getBlockPath();
+							if (block.getLogic() instanceof IBlockPathGetter) {
+								return ((IBlockPathGetter) block.getLogic()).getBlockPath();
 							}
 						}
 					}

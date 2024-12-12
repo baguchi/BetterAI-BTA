@@ -5,19 +5,20 @@ import baguchan.better_ai.api.IPath;
 import baguchan.better_ai.api.IPathGetter;
 import baguchan.better_ai.util.BlockPath;
 import com.google.common.collect.Lists;
-import net.minecraft.core.HitResult;
 import net.minecraft.core.block.Block;
-import net.minecraft.core.block.BlockDoor;
+import net.minecraft.core.block.BlockLogicDoor;
+import net.minecraft.core.block.Blocks;
 import net.minecraft.core.block.material.Material;
 import net.minecraft.core.entity.Entity;
-import net.minecraft.core.entity.EntityPathfinder;
+import net.minecraft.core.entity.MobPathfinder;
+import net.minecraft.core.util.collection.IntHashMap;
 import net.minecraft.core.util.helper.Direction;
 import net.minecraft.core.util.helper.MathHelper;
 import net.minecraft.core.util.phys.AABB;
-import net.minecraft.core.util.phys.Vec3d;
+import net.minecraft.core.util.phys.HitResult;
+import net.minecraft.core.util.phys.Vec3;
 import net.minecraft.core.world.World;
-import net.minecraft.core.world.pathfinder.IdHashMap;
-import net.minecraft.core.world.weather.Weather;
+import net.minecraft.core.world.weather.Weathers;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -28,14 +29,14 @@ import static baguchan.better_ai.util.BlockPath.*;
 public class BetterPathFinder {
 	private final World worldSource;
 	private final BetterBinaryHeap openSet = new BetterBinaryHeap();
-	private final IdHashMap closedSet = new IdHashMap();
+	private final IntHashMap closedSet = new IntHashMap();
 	protected final BetterNode[] neighbors = new BetterNode[32];
 	private BetterPath path;
-	public final EntityPathfinder entityPathfinder;
+	public final MobPathfinder mobPathfinder;
 
-	public BetterPathFinder(World worldSource, EntityPathfinder entityPathfinder) {
+	public BetterPathFinder(World worldSource, MobPathfinder mobPathfinder) {
 		this.worldSource = worldSource;
-		this.entityPathfinder = entityPathfinder;
+		this.mobPathfinder = mobPathfinder;
 	}
 
 
@@ -87,14 +88,13 @@ public class BetterPathFinder {
 	protected void trimPath() {
 		if (this.path != null) {
 
-			if (!((IPathGetter) entityPathfinder).canHideFromSkyLight()) {
+			if (this.worldSource.canBlockSeeTheSky(MathHelper.floor(this.mobPathfinder.x), MathHelper.floor(this.mobPathfinder.y + 0.5F), MathHelper.floor(this.mobPathfinder.z))) {
 				return;
 			}
 
 			for (int i = 0; i < this.path.getNodes().length; i++) {
 				BetterNode node = this.path.getNodes()[i];
-				float f = entityPathfinder.getBrightness(1.0F);
-				if (((IPathGetter) entityPathfinder).canHideFromSkyLight() && f > 0.5F && this.worldSource.canBlockSeeTheSky(MathHelper.floor_double(node.x), MathHelper.floor_double(node.y), MathHelper.floor_double(node.z)) && (this.worldSource.getCurrentWeather() != Weather.overworldFog || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
+				if (((IPathGetter) mobPathfinder).canHideFromSkyLight() && this.worldSource.isDaytime() && this.worldSource.canBlockSeeTheSky(MathHelper.floor(node.x), MathHelper.floor(node.y), MathHelper.floor(node.z)) && (this.worldSource.getCurrentWeather() != Weathers.OVERWORLD_FOG || this.worldSource.weatherManager.getWeatherPower() < 0.75F)) {
 					this.path.truncateNodes(i);
 					return;
 				}
@@ -114,8 +114,8 @@ public class BetterPathFinder {
 	protected BetterPath findPath(Entity entity, double xt, double yt, double zt, float distance) {
 		this.openSet.clear();
 		this.closedSet.clear();
-		BetterNode pathpoint = this.getBetterNode(MathHelper.floor_double(entity.bb.minX), MathHelper.floor_double(entity.bb.minY), MathHelper.floor_double(entity.bb.minZ));
-		BetterNode pathpoint1 = this.getBetterNode(MathHelper.floor_double(xt - (double) (entity.bbWidth / 2.0F)), MathHelper.floor_double(yt), MathHelper.floor_double(zt - (double) (entity.bbWidth / 2.0F)));
+		BetterNode pathpoint = this.getBetterNode(MathHelper.floor(entity.bb.minX), MathHelper.floor(entity.bb.minY), MathHelper.floor(entity.bb.minZ));
+		BetterNode pathpoint1 = this.getBetterNode(MathHelper.floor(xt - (double) (entity.bbWidth / 2.0F)), MathHelper.floor(yt), MathHelper.floor(zt - (double) (entity.bbWidth / 2.0F)));
 		BetterNode pathpoint2 = new BetterNode(MathHelper.floor_float(entity.bbWidth + 1.0F), MathHelper.floor_float(entity.bbHeight + 1.0F), MathHelper.floor_float(entity.bbWidth + 1.0F));
 		BetterPath pathentity = this.findPath(entity, pathpoint, pathpoint1, pathpoint2, distance);
 
@@ -182,7 +182,7 @@ public class BetterPathFinder {
 		int j = 0;
 		BlockPath pathtype = this.getBlockPathStatic(worldSource, pathpoint.x, pathpoint.y + 1, pathpoint.z);
 		BlockPath pathtype1 = this.getBlockPathStatic(worldSource, pathpoint.x, pathpoint.y, pathpoint.z);
-		if (entityPathfinder instanceof IPathGetter && ((IPathGetter) this.entityPathfinder).getPathfindingMalus(this.entityPathfinder, pathtype) >= 0.0F) {
+		if (mobPathfinder instanceof IPathGetter && ((IPathGetter) this.mobPathfinder).getPathfindingMalus(this.mobPathfinder, pathtype) >= 0.0F) {
 			j = MathHelper.floor_float(Math.max(1.0F, 1.0F));
 		}
 
@@ -226,8 +226,9 @@ public class BetterPathFinder {
 			return null;
 		} else {
 			BlockPath pathtype = this.getBlockPathStatic(this.worldSource, x, y, z);
-			if (this.entityPathfinder instanceof IPathGetter) {
-				float f = ((IPathGetter) this.entityPathfinder).getPathfindingMalus(this.entityPathfinder, pathtype == null ? BlockPath.BLOCKED : pathtype);
+			BlockPath pathtype2 = this.getBlockPathStatic(this.worldSource, x, y + 1, z);
+			if (this.mobPathfinder instanceof IPathGetter) {
+				float f = ((IPathGetter) this.mobPathfinder).getPathfindingMalus(this.mobPathfinder, pathtype == null ? BlockPath.BLOCKED : pathtype);
 				if (f >= 0.0F) {
 					node = this.getNodeAndUpdateCostToMax(x, y, z, pathtype, f);
 				}
@@ -242,7 +243,9 @@ public class BetterPathFinder {
 					&& height > 0
 					&& (pathtype != BlockPath.FENCE || this.canWalkOverFences())
 					&& pathtype != BlockPath.UNPASSABLE_RAIL
-					&& pathtype != BlockPath.TRAPDOOR) {
+					&& pathtype != BlockPath.TRAPDOOR
+					&& pathtype != DANGER_FIRE
+					&& pathtype != DANGER) {
 					node = this.tryJumpOn(x, y, z, height, floorHeight, direction);
 				} else if (!this.isAmphibious() && pathtype == WATER && !this.canFloat()) {
 					node = this.tryFindFirstNonWaterBelow(x, y, z, node);
@@ -263,7 +266,7 @@ public class BetterPathFinder {
 		if (p_326821_ == null || p_326803_ == null || p_326821_.y > p_326907_.y || p_326803_.y > p_326907_.y) {
 			return false;
 		} else if (p_326803_.type != BlockPath.WALKABLE_DOOR && p_326821_.type != BlockPath.WALKABLE_DOOR) {
-			boolean flag = p_326821_.type == BlockPath.FENCE && p_326803_.type == BlockPath.FENCE && (double) this.entityPathfinder.bbWidth < 0.5;
+			boolean flag = p_326821_.type == BlockPath.FENCE && p_326803_.type == BlockPath.FENCE && (double) this.mobPathfinder.bbWidth < 0.5;
 			return (p_326821_.y < p_326907_.y || p_326821_.costMalus >= 0.0F || flag) && (p_326803_.y < p_326907_.y || p_326803_.costMalus >= 0.0F || flag);
 		} else {
 			return false;
@@ -289,7 +292,7 @@ public class BetterPathFinder {
 				return p_326880_;
 			}
 
-			p_326880_ = this.getNodeAndUpdateCostToMax(p_326959_, p_326927_, p_326932_, pathtype, ((IPathGetter) this.entityPathfinder).getPathfindingMalus(this.entityPathfinder, pathtype));
+			p_326880_ = this.getNodeAndUpdateCostToMax(p_326959_, p_326927_, p_326932_, pathtype, ((IPathGetter) this.mobPathfinder).getPathfindingMalus(this.mobPathfinder, pathtype));
 			p_326927_--;
 		}
 
@@ -313,39 +316,39 @@ public class BetterPathFinder {
 		BetterNode node = this.findAcceptedNode(x, y + 1, z, height - 1, floor, direction);
 		if (node == null) {
 			return null;
-		} else if (this.entityPathfinder.bbWidth >= 1.0F) {
+		} else if (this.mobPathfinder.bbWidth >= 1.0F) {
 			return node;
 		} else if (node.type != BlockPath.OPEN && node.type != WALKABLE) {
 			return node;
 		} else {
 			double d0 = (double) (x - direction.getOffsetX()) + 0.5;
 			double d1 = (double) (z - direction.getOffsetZ()) + 0.5;
-			double d2 = (double) this.entityPathfinder.bbHeight / 2.0;
-			AABB aabb = new AABB(
+			double d2 = (double) this.mobPathfinder.bbHeight / 2.0;
+			AABB aabb = AABB.getPermanentBB(
 				d0 - d2,
 				this.getFloorLevel((int) d0, (y + 1), (int) d1) + 0.001,
 				d1 - d2,
 				d0 + d2,
-				(double) this.entityPathfinder.bbHeight + this.getFloorLevel(node.x, node.y, node.z) - 0.002,
+				(double) this.mobPathfinder.bbHeight + this.getFloorLevel(node.x, node.y, node.z) - 0.002,
 				d1 + d2
 			);
-			return !this.worldSource.getCubes(entityPathfinder, aabb).isEmpty() ? null : node;
+			return !this.worldSource.getCubes(mobPathfinder, aabb).isEmpty() ? null : node;
 		}
 	}
 
 	private boolean canReachWithoutCollision(BetterNode p_77625_) {
-		AABB aabb = this.entityPathfinder.bb;
-		Vec3d vec3 = Vec3d.createVector(
-			(double) p_77625_.x - this.entityPathfinder.x + (aabb.maxX - aabb.minX) / 2.0,
-			(double) p_77625_.y - this.entityPathfinder.y + (aabb.maxY - aabb.minY) / 2.0,
-			(double) p_77625_.z - this.entityPathfinder.z + (aabb.maxZ - aabb.minZ) / 2.0
+		AABB aabb = this.mobPathfinder.bb;
+		Vec3 vec3 = Vec3.getPermanentVec3(
+			(double) p_77625_.x - this.mobPathfinder.x + (aabb.maxX - aabb.minX) / 2.0,
+			(double) p_77625_.y - this.mobPathfinder.y + (aabb.maxY - aabb.minY) / 2.0,
+			(double) p_77625_.z - this.mobPathfinder.z + (aabb.maxZ - aabb.minZ) / 2.0
 		);
-		int i = (int) Math.ceil(vec3.lengthVector() / aabb.getAverageEdgeLength());
-		vec3 = Vec3d.createVector(vec3.xCoord * (double) (1.0F / (float) i), vec3.yCoord * (double) (1.0F / (float) i), vec3.zCoord * (double) (1.0F / (float) i));
+		int i = (int) Math.ceil(vec3.length() / aabb.getSize());
+		vec3 = Vec3.getPermanentVec3(vec3.x * (double) (1.0F / (float) i), vec3.y * (double) (1.0F / (float) i), vec3.z * (double) (1.0F / (float) i));
 
 		for (int j = 1; j <= i; j++) {
-			aabb = aabb.offset(vec3.xCoord, vec3.yCoord, vec3.zCoord);
-			if (!this.worldSource.getCubes(entityPathfinder, aabb).isEmpty()) {
+			aabb = aabb.move(vec3.x, vec3.y, vec3.z);
+			if (!this.worldSource.getCubes(mobPathfinder, aabb).isEmpty()) {
 				return false;
 			}
 		}
@@ -366,7 +369,7 @@ public class BetterPathFinder {
 	}
 
 	private double getFloorLevel(int x, int y, int z) {
-		return this.worldSource.getBlock(x, y, z) == null ? y : this.worldSource.getBlock(x, y, z).maxY + y;
+		return this.worldSource.getBlock(x, y, z) == null ? y : this.worldSource.getBlock(x, y, z).getLogic().getBounds().maxY + y;
 	}
 
 
@@ -384,8 +387,8 @@ public class BetterPathFinder {
 			}
 
 			BlockPath pathtype = this.getBlockPathStatic(worldSource, p_326892_, i, p_326809_);
-			if (entityPathfinder instanceof IPathGetter) {
-				float f = ((IPathGetter) entityPathfinder).getPathfindingMalus(entityPathfinder, pathtype);
+			if (mobPathfinder instanceof IPathGetter) {
+				float f = ((IPathGetter) mobPathfinder).getPathfindingMalus(mobPathfinder, pathtype);
 				if (pathtype != BlockPath.OPEN) {
 					if (f >= 0.0F) {
 						return this.getNodeAndUpdateCostToMax(p_326892_, i, p_326809_, pathtype, f);
@@ -428,7 +431,7 @@ public class BetterPathFinder {
 		BetterNode pathpoint = (BetterNode) this.closedSet.get(l);
 		if (pathpoint == null) {
 			pathpoint = new BetterNode(x, y, z);
-			this.closedSet.add(l, pathpoint);
+			this.closedSet.put(l, pathpoint);
 		}
 
 		return pathpoint;
@@ -445,7 +448,7 @@ public class BetterPathFinder {
 			if (pathtype1 == DAMAGE_FIRE) {
 				return DANGER_FIRE;
 			}
-			return checkNeighbourBlocks(p_330755_, this.entityPathfinder, x, y, z, BlockPath.WALKABLE);
+			return checkNeighbourBlocks(p_330755_, this.mobPathfinder, x, y, z, BlockPath.WALKABLE);
 		} else {
 			return pathtype;
 		}
@@ -487,10 +490,10 @@ public class BetterPathFinder {
 			flag3 = true;
 		}
 
-		Vec3d srcVec = Vec3d.createVector(x, y, z);
-		Vec3d destVec = srcVec.addVector(pathpoint.x, pathpoint.y, pathpoint.z);
-		AABB collisionBB = AABB.getBoundingBox(x - 1F, y - 1F, z - 1F, x, y, z).expand(pathpoint.x, pathpoint.y, pathpoint.z).offset(pathpoint.x / 2, pathpoint.y / 2, pathpoint.z / 2);
-		HitResult interceptPos = collisionBB.func_1169_a(srcVec, destVec);
+		Vec3 srcVec = Vec3.getPermanentVec3(x, y, z);
+		Vec3 destVec = srcVec.add(pathpoint.x, pathpoint.y, pathpoint.z);
+		AABB collisionBB = AABB.getPermanentBB(x - 1F, y - 1F, z - 1F, x, y, z).expand(pathpoint.x, pathpoint.y, pathpoint.z).move(pathpoint.x / 2, pathpoint.y / 2, pathpoint.z / 2);
+		HitResult interceptPos = collisionBB.clip(srcVec, destVec);
 		double possibleDist = 0.0;
 		if (interceptPos != null) {
 			possibleDist = srcVec.distanceTo(interceptPos.location);
@@ -500,7 +503,7 @@ public class BetterPathFinder {
 		for (int x1 = x + (flag ? pathpoint.x : 0); x1 < x + (flag ? 0 : pathpoint.x); ++x1) {
 			for (int y1 = y + (flag2 ? pathpoint.y : 0); y1 < y + (flag2 ? 0 : pathpoint.y); ++y1) {
 				for (int z1 = z + (flag3 ? pathpoint.z : 0); z1 < z + (flag3 ? 0 : pathpoint.z); ++z1) {
-					double blockDistance = srcVec.distanceTo(Vec3d.createVector(x1, y1, z1));
+					double blockDistance = srcVec.distanceTo(Vec3.getPermanentVec3(x1, y1, z1));
 					if (blockDistance < possibleDist) {
 						BlockPath blockPath = this.getBlockPathStatic(worldSource, x1, y1, z1);
 						if (blockPath != null) {
@@ -516,15 +519,16 @@ public class BetterPathFinder {
 
 	private BlockPath getBlockPath(int x1, int y1, int z1) {
 		int k1 = this.worldSource.getBlockId(x1, y1, z1);
+		int k2 = this.worldSource.getBlockId(MathHelper.floor(this.mobPathfinder.x), MathHelper.floor(this.mobPathfinder.y), MathHelper.floor(this.mobPathfinder.z));
 		if (k1 > 0) {
-			if (Block.blocksList[k1] instanceof BlockDoor) {
+			if (Blocks.blocksList[k1].getLogic() instanceof BlockLogicDoor) {
 				int l1 = this.worldSource.getBlockMetadata(x1, y1, z1);
-				if (!BlockDoor.isOpen(l1)) {
+				if (!BlockLogicDoor.isOpen(l1)) {
 					return BlockPath.DOOR_OPEN;
 				}
 			} else {
-				Block block = Block.blocksList[k1];
-				Material material = block.blockMaterial;
+				Block block = Blocks.getBlock(k1);
+				Material material = block.getMaterial();
 
 
 				if (material == Material.water) {
@@ -532,21 +536,39 @@ public class BetterPathFinder {
 				}
 
 				if (material == Material.lava) {
-					return LAVA;
+					return this.checkSameBlockPath(k2, LAVA);
 				}
 				if (material == Material.fire) {
-					return BlockPath.DAMAGE_FIRE;
+					return this.checkSameBlockPath(k2, DANGER_FIRE);
 				}
 				if (material.blocksMotion()) {
-					return BlockPath.BLOCKED;
+					return this.checkSameBlockPath(k2, BlockPath.BLOCKED);
 				}
 
-				if (block instanceof IBlockPathGetter) {
-					return ((IBlockPathGetter) block).getBlockPath();
+				if (block.getLogic() instanceof IBlockPathGetter) {
+					return this.checkSameBlockPath(k2, ((IBlockPathGetter) block.getLogic()).getBlockPath());
 				}
 			}
 		}
 		return BlockPath.OPEN;
+	}
+
+	private BlockPath checkSameBlockPath(int id, BlockPath blockPath) {
+		if (id > 0) {
+			Block block = Blocks.getBlock(id);
+			Material material2 = block.getMaterial();
+			if (material2 == Material.lava && blockPath == LAVA || material2 == Material.fire && blockPath == DANGER_FIRE) {
+				return DAMAGE_FIRE;
+			}
+			if (material2.blocksMotion() && blockPath == BLOCKED) {
+				return DAMAGE;
+			}
+
+			if (block.getLogic() instanceof IBlockPathGetter && ((IBlockPathGetter) block.getLogic()).getBlockPath() == DANGER && blockPath == DANGER) {
+				return DAMAGE;
+			}
+		}
+		return blockPath;
 	}
 
 	private BetterPath reconstructPath(BetterNode p_77435_) {

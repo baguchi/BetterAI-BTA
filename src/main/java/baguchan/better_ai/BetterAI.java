@@ -11,6 +11,6 @@ public class BetterAI implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        LOGGER.info("ExampleMod initialized.");
+		LOGGER.info("Better Ai initialized.");
     }
 }

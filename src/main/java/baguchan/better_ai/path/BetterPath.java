@@ -2,7 +2,7 @@ package baguchan.better_ai.path;
 
 import com.google.common.collect.Lists;
 import net.minecraft.core.entity.Entity;
-import net.minecraft.core.util.phys.Vec3d;
+import net.minecraft.core.util.phys.Vec3;
 import net.minecraft.core.world.pathfinder.Node;
 import net.minecraft.core.world.pathfinder.Path;
 
@@ -45,15 +45,15 @@ public class BetterPath extends Path {
 		return this.length > 0 ? this.nodes[this.length - 1] : null;
 	}
 
-	public Vec3d getPos(Entity entity) {
+	public Vec3 getPos(Entity entity) {
 		if (this.isDone()) {
-			return Vec3d.createVector(entity.x - 0.5, entity.y, entity.z - 0.5);
+			return Vec3.getPermanentVec3(entity.x - 0.5, entity.y, entity.z - 0.5);
 		}
 
 		double x = (double) this.nodes[this.index].x + (double) ((int) (entity.bbWidth + 2.0F)) * 0.5;
 		double y = (double) this.nodes[this.index].y;
 		double z = (double) this.nodes[this.index].z + (double) ((int) (entity.bbWidth + 2.0F)) * 0.5;
-		return Vec3d.createVector(x - 0.5, y, z - 0.5);
+		return Vec3.getPermanentVec3(x - 0.5, y, z - 0.5);
 	}
 
 	public boolean sameAs(@Nullable BetterPath p_77386_) {

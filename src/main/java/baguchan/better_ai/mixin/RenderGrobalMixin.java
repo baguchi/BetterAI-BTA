@@ -4,10 +4,10 @@ import baguchan.better_ai.api.IPath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.RenderGlobal;
 import net.minecraft.client.render.camera.ICamera;
+import net.minecraft.client.world.WorldClient;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.player.gamemode.Gamemode;
 import net.minecraft.core.util.phys.AABB;
-import net.minecraft.core.world.World;
 import net.minecraft.core.world.pathfinder.Node;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +25,7 @@ public class RenderGrobalMixin {
 	@Shadow
 	private Minecraft mc;
 	@Shadow
-	private World worldObj;
+	private WorldClient worldObj;
 
 	@Inject(method = "drawDebugEntityOutlines", at = @At("HEAD"))
 	public void drawDebugEntityOutlines(ICamera camera, float partialTicks, CallbackInfo ci) {
@@ -52,7 +52,7 @@ public class RenderGrobalMixin {
 				if (path.getCurrentPath() != null) {
 					for (Node node : path.getCurrentPath()) {
 						if (node != null) {
-							AABB aabb = new AABB(node.x - x, node.y - y, node.z - z, node.x + 1 - x, node.y + 0.1F - y, node.z + 1 - z);
+							AABB aabb = AABB.getPermanentBB(node.x - x, node.y - y, node.z - z, node.x + 1 - x, node.y + 0.1F - y, node.z + 1 - z);
 							this.drawOutlinedBoundingBox(aabb);
 						}
 					}
